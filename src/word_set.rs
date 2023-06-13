@@ -66,10 +66,47 @@
 //     }
 // }
 
+use std::fmt::{self};
 use std::slice::Iter;
 
+#[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
+pub struct Word {
+    chars: [char; 5],
+}
+
+impl Word {
+    pub fn from_string(str: String) -> Word {
+        let char_vec: Vec<char> = str.chars().collect();
+        Word {
+            chars: char_vec.try_into().unwrap(),
+        }
+    }
+
+    pub fn from_str(str: &str) -> Word {
+        let char_vec: Vec<char> = str.chars().collect();
+        Word {
+            chars: char_vec.try_into().unwrap(),
+        }
+    }
+
+    pub fn get(self: &Self, index: usize) -> char {
+        self.chars[index]
+    }
+
+    pub fn len(self: &Self) -> usize {
+        self.chars.len()
+    }
+}
+
+impl fmt::Display for Word {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let str: String = self.chars.iter().collect();
+        write!(f, "{}", str)
+    }
+}
+
 pub struct WordSet {
-    words: Vec<String>,
+    words: Vec<Word>,
 }
 
 impl WordSet {
@@ -77,18 +114,15 @@ impl WordSet {
         WordSet { words: vec![] }
     }
 
-    pub fn insert(self: &mut Self, str: String) {
+    pub fn insert(self: &mut Self, str: Word) {
         match self.words.binary_search(&str) {
             Ok(_) => { /* element already in vector */ }
             Err(pos) => self.words.insert(pos, str),
         };
     }
 
-    pub fn contains(self: &Self, str: &str) -> bool {
-        match self
-            .words
-            .binary_search_by(|word: &String| word.as_str().cmp(str))
-        {
+    pub fn contains(self: &Self, str: &Word) -> bool {
+        match self.words.binary_search(str) {
             Ok(_) => true,
             Err(_) => false,
         }
@@ -98,7 +132,7 @@ impl WordSet {
         self.words.len()
     }
 
-    pub fn iter(self: &Self) -> Iter<String> {
+    pub fn iter(self: &Self) -> Iter<Word> {
         self.words.iter()
     }
 }
@@ -144,31 +178,31 @@ impl WordSet {
 #[test]
 fn test_basics() {
     let mut word_set = WordSet::new();
-    word_set.insert(String::from("foozz"));
-    word_set.insert(String::from("barzz"));
-    word_set.insert(String::from("bazzz"));
+    word_set.insert(Word::from_str("foozz"));
+    word_set.insert(Word::from_str("barzz"));
+    word_set.insert(Word::from_str("bazzz"));
 
-    assert_eq!(word_set.contains(&String::from("foozz")), true);
-    assert_eq!(word_set.contains(&String::from("barzz")), true);
-    assert_eq!(word_set.contains(&String::from("bazzz")), true);
-    assert_eq!(word_set.contains(&String::from("batzz")), false);
-    assert_eq!(word_set.contains(&String::from("bagzz")), false);
+    assert_eq!(word_set.contains(&Word::from_str("foozz")), true);
+    assert_eq!(word_set.contains(&Word::from_str("barzz")), true);
+    assert_eq!(word_set.contains(&Word::from_str("bazzz")), true);
+    assert_eq!(word_set.contains(&Word::from_str("batzz")), false);
+    assert_eq!(word_set.contains(&Word::from_str("bagzz")), false);
 }
 
 #[test]
 fn test_iter_doesnt_consume() {
     let mut word_set = WordSet::new();
-    word_set.insert(String::from("foozz"));
-    word_set.insert(String::from("barzz"));
-    word_set.insert(String::from("bazzz"));
+    word_set.insert(Word::from_str("foozz"));
+    word_set.insert(Word::from_str("barzz"));
+    word_set.insert(Word::from_str("bazzz"));
 
-    let iter1: Vec<&String> = word_set.iter().collect();
-    assert_eq!(iter1.contains(&&String::from("foozz")), true);
-    assert_eq!(iter1.contains(&&String::from("barzz")), true);
-    assert_eq!(iter1.contains(&&String::from("bazzz")), true);
+    let iter1: Vec<&Word> = word_set.iter().collect();
+    assert_eq!(iter1.contains(&&Word::from_str("foozz")), true);
+    assert_eq!(iter1.contains(&&Word::from_str("barzz")), true);
+    assert_eq!(iter1.contains(&&Word::from_str("bazzz")), true);
 
-    let iter2: Vec<&String> = word_set.iter().collect();
-    assert_eq!(iter2.contains(&&String::from("foozz")), true);
-    assert_eq!(iter2.contains(&&String::from("barzz")), true);
-    assert_eq!(iter2.contains(&&String::from("bazzz")), true);
+    let iter2: Vec<&Word> = word_set.iter().collect();
+    assert_eq!(iter2.contains(&&Word::from_str("foozz")), true);
+    assert_eq!(iter2.contains(&&Word::from_str("barzz")), true);
+    assert_eq!(iter2.contains(&&Word::from_str("bazzz")), true);
 }

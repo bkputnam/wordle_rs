@@ -1,3 +1,4 @@
+use crate::word_set::Word;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum CompareValue {
@@ -20,7 +21,7 @@ impl CompareValue {
         match self {
             CompareValue::NotUsed => '_',
             CompareValue::WrongLocation => '?',
-            CompareValue::RightLocation => '.'
+            CompareValue::RightLocation => '.',
         }
     }
 }
@@ -56,7 +57,7 @@ impl CompareResult {
                 CompareValue::from_char(chars.next().unwrap()),
                 CompareValue::from_char(chars.next().unwrap()),
                 CompareValue::from_char(chars.next().unwrap()),
-            ]
+            ],
         }
     }
 
@@ -83,9 +84,7 @@ impl CompareResult {
     }
 
     pub fn value_str(self: &Self) -> String {
-        String::from_iter(
-            self.values.map(
-                |value: CompareValue| value.to_char()))
+        String::from_iter(self.values.map(|value: CompareValue| value.to_char()))
     }
 
     pub fn value_num(self: &Self) -> u8 {
@@ -93,8 +92,10 @@ impl CompareResult {
     }
 
     pub fn is_all_correct(self: &Self) -> bool {
-        self.values.iter().copied().all(
-            |value: CompareValue| value == CompareValue::RightLocation)
+        self.values
+            .iter()
+            .copied()
+            .all(|value: CompareValue| value == CompareValue::RightLocation)
     }
 
     pub fn to_string(self: &Self) -> String {
@@ -102,23 +103,21 @@ impl CompareResult {
     }
 }
 
-pub fn compare_as_num(guess: &str, actual: &str) -> Result<u8, String> {
+pub fn compare_as_num(guess: &Word, actual: &Word) -> Result<u8, String> {
     if guess.len() != actual.len() {
-        return Err(
-            format!(
-                "Guess was wrong length: expected {}, got {}",
-                actual.len(), guess.len()));
+        return Err(format!(
+            "Guess was wrong length: expected {}, got {}",
+            actual.len(),
+            guess.len()
+        ));
     }
 
     let mut values: CompareValues = [CompareValue::NotUsed; 5];
     let mut used_guess_chars = [false; 5];
     let mut used_actual_chars = [false; 5];
 
-    let guess_chars: Vec<char> = guess.chars().collect();
-    let actual_chars: Vec<char> = actual.chars().collect();
-
     for i in 0..5 {
-        if guess_chars.get(i) == actual_chars.get(i) {
+        if guess.get(i) == actual.get(i) {
             values[i] = CompareValue::RightLocation;
             used_guess_chars[i] = true;
             used_actual_chars[i] = true;
@@ -133,7 +132,7 @@ pub fn compare_as_num(guess: &str, actual: &str) -> Result<u8, String> {
             if used_actual_chars[actual_index] {
                 continue;
             }
-            if guess_chars.get(guess_index) == actual_chars.get(actual_index) {
+            if guess.get(guess_index) == actual.get(actual_index) {
                 values[guess_index] = CompareValue::WrongLocation;
                 used_guess_chars[guess_index] = true;
                 used_actual_chars[actual_index] = true;
@@ -144,7 +143,7 @@ pub fn compare_as_num(guess: &str, actual: &str) -> Result<u8, String> {
 }
 
 pub fn compare(guess: String, actual: String) -> Result<CompareResult, String> {
-    match compare_as_num(guess.as_str(), actual.as_str()) {
+    match compare_as_num(&Word::from_str(&guess), &Word::from_string(actual)) {
         Ok(value_num) => Ok(CompareResult::from_value_num(guess, value_num)),
         Err(err) => Err(err),
     }
@@ -152,106 +151,117 @@ pub fn compare(guess: String, actual: String) -> Result<CompareResult, String> {
 
 #[test]
 fn it_should_compute_value_num_correctly() {
-    let compare = CompareResult::from_string(
-        String::from("hello"), String::from("_____"));
+    let compare = CompareResult::from_string(String::from("hello"), String::from("_____"));
     assert_eq!(compare.value_num(), 0);
 }
 
 #[test]
 fn it_should_compute_value_num_correctly_2() {
-    let compare = CompareResult::from_string(
-        String::from("hello"), String::from("__?._"));
+    let compare = CompareResult::from_string(String::from("hello"), String::from("__?._"));
     assert_eq!(compare.value_num(), (1 * 9) + (2 * 27));
 }
 
 #[test]
 fn it_should_handle_double_letters() {
-    let result =
-        compare(String::from("arbor"), String::from("opera"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::WrongLocation,
-        CompareValue::WrongLocation,
-        CompareValue::NotUsed,
-        CompareValue::WrongLocation,
-        CompareValue::NotUsed,
-    ]);
+    let result = compare(String::from("arbor"), String::from("opera"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::WrongLocation,
+            CompareValue::WrongLocation,
+            CompareValue::NotUsed,
+            CompareValue::WrongLocation,
+            CompareValue::NotUsed,
+        ]
+    );
 }
 
 #[test]
 fn test_boing_noise() {
-    let result =
-        compare(String::from("boing"), String::from("noise"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::NotUsed,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::WrongLocation,
-        CompareValue::NotUsed,
-    ]);
+    let result = compare(String::from("boing"), String::from("noise"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::NotUsed,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::WrongLocation,
+            CompareValue::NotUsed,
+        ]
+    );
 }
 
 #[test]
 fn test_baaaa_aaaac() {
-    let result =
-        compare(String::from("baaaa"), String::from("aaaac"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::NotUsed,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::WrongLocation,
-    ]);
+    let result = compare(String::from("baaaa"), String::from("aaaac"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::NotUsed,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::WrongLocation,
+        ]
+    );
 }
 
 #[test]
 fn test_aaaab_caaaa() {
-    let result =
-        compare(String::from("aaaab"), String::from("caaaa"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::WrongLocation,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::NotUsed,
-    ]);
+    let result = compare(String::from("aaaab"), String::from("caaaa"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::WrongLocation,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::NotUsed,
+        ]
+    );
 }
 
 #[test]
 fn test_lares_water() {
-    let result =
-        compare(String::from("lares"), String::from("water"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::NotUsed,
-        CompareValue::RightLocation,
-        CompareValue::WrongLocation,
-        CompareValue::RightLocation,
-        CompareValue::NotUsed,
-    ]);
+    let result = compare(String::from("lares"), String::from("water"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::NotUsed,
+            CompareValue::RightLocation,
+            CompareValue::WrongLocation,
+            CompareValue::RightLocation,
+            CompareValue::NotUsed,
+        ]
+    );
 }
 
 #[test]
 fn test_kydst_water() {
-    let result =
-        compare(String::from("kydst"), String::from("water"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::NotUsed,
-        CompareValue::NotUsed,
-        CompareValue::NotUsed,
-        CompareValue::NotUsed,
-        CompareValue::WrongLocation,
-    ]);
+    let result = compare(String::from("kydst"), String::from("water"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::NotUsed,
+            CompareValue::NotUsed,
+            CompareValue::NotUsed,
+            CompareValue::NotUsed,
+            CompareValue::WrongLocation,
+        ]
+    );
 }
 
 #[test]
 fn test_rater_water() {
-    let result =
-        compare(String::from("rater"), String::from("water"));
-    assert_eq!(result.unwrap().values, [
-        CompareValue::NotUsed,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-        CompareValue::RightLocation,
-    ]);
+    let result = compare(String::from("rater"), String::from("water"));
+    assert_eq!(
+        result.unwrap().values,
+        [
+            CompareValue::NotUsed,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+            CompareValue::RightLocation,
+        ]
+    );
 }
-
