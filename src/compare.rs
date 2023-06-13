@@ -25,14 +25,14 @@ impl CompareValue {
     }
 }
 
-impl TryFrom<i32> for CompareValue {
+impl TryFrom<u8> for CompareValue {
     type Error = ();
 
-    fn try_from(v: i32) -> Result<Self, Self::Error> {
+    fn try_from(v: u8) -> Result<Self, Self::Error> {
         match v {
-            v if v == CompareValue::NotUsed as i32 => Ok(CompareValue::NotUsed),
-            v if v == CompareValue::WrongLocation as i32 => Ok(CompareValue::WrongLocation),
-            v if v == CompareValue::RightLocation as i32 => Ok(CompareValue::RightLocation),
+            v if v == CompareValue::NotUsed as u8 => Ok(CompareValue::NotUsed),
+            v if v == CompareValue::WrongLocation as u8 => Ok(CompareValue::WrongLocation),
+            v if v == CompareValue::RightLocation as u8 => Ok(CompareValue::RightLocation),
             _ => Err(()),
         }
     }
@@ -60,18 +60,18 @@ impl CompareResult {
         }
     }
 
-    pub fn static_value_num(values: &CompareValues) -> i32 {
+    pub fn static_value_num(values: &CompareValues) -> u8 {
         let mut result = 0;
         let mut power = 1; // 3**0 == 1
         for i in 0..values.len() {
-            let digit = values[i] as i32;
+            let digit = values[i] as u8;
             result += power * digit;
             power *= 3;
         }
         result
     }
 
-    pub fn from_value_num(str: String, value_num: i32) -> CompareResult {
+    pub fn from_value_num(str: String, value_num: u8) -> CompareResult {
         let mut values: CompareValues = [CompareValue::NotUsed; 5];
         let mut mut_value_num = value_num;
         for i in 0..5 {
@@ -88,7 +88,7 @@ impl CompareResult {
                 |value: CompareValue| value.to_char()))
     }
 
-    pub fn value_num(self: &Self) -> i32 {
+    pub fn value_num(self: &Self) -> u8 {
         Self::static_value_num(&self.values)
     }
 
@@ -102,7 +102,7 @@ impl CompareResult {
     }
 }
 
-pub fn compare_as_num(guess: &str, actual: &str) -> Result<i32, String> {
+pub fn compare_as_num(guess: &str, actual: &str) -> Result<u8, String> {
     if guess.len() != actual.len() {
         return Err(
             format!(
